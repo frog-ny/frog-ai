@@ -8,7 +8,6 @@ const WATSON_PW = config.watson_pw;
 const createSlackEventAdapter = require('@slack/events-api').createSlackEventAdapter;
 const slackEvents = createSlackEventAdapter(SLACK_TOKEN);
 const IncomingWebhook = require('@slack/client').IncomingWebhook;
-// const webhookUrl = 'https://hooks.slack.com/services/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'; //see section above on sensitive data
 const webhookUrl = config.webhook_url;
 const webhook = new IncomingWebhook(webhookUrl);
 const port = 3000;
