@@ -11,10 +11,19 @@ const IncomingWebhook = require('@slack/client').IncomingWebhook;
 const webhookUrl = config.webhook_url;
 const webhook = new IncomingWebhook(webhookUrl);
 const port = 3000;
+const mongoose = require('mongoose');
+const mongoDB = 'mongodb://127.0.0.1/test';
+const Article = require('./models/article');
+mongoose.Promise = global.Promise;
+mongoose.connect(mongoDB);
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', ()=>{
+    console.log('connected to mongodb');
+});
 
 const interactiveMessages  = require('@slack/interactive-messages');
-// Initialize using verification token from environment variables
-const slackMessages = interactiveMessages.createMessageAdapter(SLACK_TOKEN);
+const slackMessages = interactiveMessages.createMessageAdapter(SLACK_TOKEN);  // Initialize using verification token from environment variables
 
 // init express
 const express = require('express');
@@ -29,7 +38,6 @@ const natural_language_understanding = new NaturalLanguageUnderstanding({
   'version_date': '2017-02-27'
 });
 
-// let rtm = new RtmClient(bot_token);
 let channel = 'C6GN4GYGM';
 let botConnected = false;
 
@@ -49,28 +57,10 @@ app.use(bodyParser.urlencoded({ extended: false  }));
 app.use('/slack/events', slackEvents.expressMiddleware());
 app.use('/slack/actions', slackMessages.expressMiddleware());
 
-// const RtmClient = require('@slack/client').RtmClient;
-// const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
-// The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload
-// rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
-//     rtmStartData.channels.forEach((c)=>{
-//         if (c.is_member && c.name ==='testing_frogai') { channel = c.id }
-//     })
-//     console.log(`Logged in as ${rtmStartData.self.name} of team ${rtmStartData.team.name}, but not yet connected to a channel`);
-// });
-
-// // you need to wait for the client to fully connect before you can send messages
-// rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, ()=>{
-//     rtm.sendMessage("i'm connected!", channel);
-//     botConnected = true;
-// });
-
-// rtm.start();
-
 let concepts;
 let message;
 let match;
-const re = /(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])?/
+const re = /(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])?/ // regex to look for links posted in a message
 
 // Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
 slackEvents.on('message', (event) => {
@@ -92,6 +82,7 @@ slackEvents.on('message', (event) => {
                         concepts += e.text + ', '
                     });
                     response.concepts.forEach((c, index)=>{
+                        response.entities.push(response.concepts[index]);
                         if (index != response.concepts.length - 1){
                             concepts += c.text + ', '
                         }else {
@@ -135,8 +126,6 @@ slackEvents.on('message', (event) => {
                         console.log('Received', statusCode, 'from Slack');
                       }
                     });
-
-                    // rtm.sendMessage(message, channel);
                 }
             });
         }
@@ -153,6 +142,24 @@ slackMessages.action('train_me', (payload) => {
     // The `actions` array contains details about the specific action (button press, menu selection, etc.)
     const action = payload.actions[0];
     console.log(`The button had name ${action.name} and value ${action.value}`);
+    if (action.value != 'no'){
+        var article = new Article({
+            posted_by: payload.user.name,
+            timestamp: Date.now(),
+            url: action.value,
+            tags: []
+        });
+
+        article.save(function(err){
+            if(err) {
+                console.error(err);
+            }
+            else {
+                console.log('saved new article');
+            }
+        });
+    
+    }
 
     // You should return a JSON object which describes a message to replace the original.
     // Note that the payload contains a copy of the original message (`payload.original_message`).
@@ -162,11 +169,6 @@ slackMessages.action('train_me', (payload) => {
     delete replacement.attachments;
     return replacement;
 });
-
-// Start a basic HTTP server
-// slackEvents.start(port).then(() => {
-//   console.log(`server listening on port ${port}`);
-// });
 
 // Start the express application
 http.createServer(app).listen(port, () => {

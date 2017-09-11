@@ -9,6 +9,8 @@
     "@slack/interactive-messages": "^0.1.2",
     "body-parser": "^1.17.2",
     "express": "^4.15.3",
+    "mongodb": "^2.2.31",
+    "mongoose": "^4.11.7",
     "watson-developer-cloud": "^2.37.0"
   },
   "devDependencies": {},
