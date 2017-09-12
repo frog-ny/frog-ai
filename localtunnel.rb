@@ -1,11 +1,12 @@
 require 'optparse'
+require 'daemons'
 
 options = {:subdomain => 'defaultdomain', :port => 3000}
 
 parser = OptionParser.new do|opts|
     opts.banner = "Usage: localtunnel.rb [options]"
     opts.on('-s', '--subdomain subdomain', 'Subdomain') do |subdomain|
-        options[:subdomain] = subdomain;
+        options[:subdomain] = "ceqjrlohvt";
     end
 
     opts.on('-p', '--port port', 'Port') do |port|
@@ -41,8 +42,10 @@ end
 
 launch_count = 0
 
-while true
-    launch_count += 1
-    puts "Running localtunnel for the #{ordinalize(launch_count)} time"
-    `lt --port #{options[:port]} --subdomain #{options[:subdomain]}`
+Daemons.run_proc('localtunnel.rb') do
+    while true
+        launch_count += 1
+        puts "Running localtunnel for the #{ordinalize(launch_count)} time"
+        `lt --port 3000 --subdomain ceqjrlohvt`
+    end
 end
