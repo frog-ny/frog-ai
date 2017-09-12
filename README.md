@@ -42,31 +42,31 @@ The basic workflow for the system is as follows:
 
 Here are some samples from our model:
 
-All is different with insight.
+    All is different with insight.
 
 ######
 
-Artificial intelligence is used to discuss some long-term memories of introduction-tatal.
+    Artificial intelligence is used to discuss some long-term memories of introduction-tatal.
 
 ######
 
-In every classification of which learning and controlling principle of other events, and companies, with weaks universe of resulting processing, knowledge-based provided used for design.
+    In every classification of which learning and controlling principle of other events, and companies, with weaks universe of resulting processing, knowledge-based provided used for design.
 
 ######
 
-We shit special worlds, and thoughts match when we report the system?
+    We shit special worlds, and thoughts match when we report the system?
 
 ######
 
-With the dispotent and technical emotional knowledge of strategies to use with the technology to simply chaunite any are they quite an exploit the wailer; we formed, the affordance is a skill 
+    With the dispotent and technical emotional knowledge of strategies to use with the technology to simply chaunite any are they quite an exploit the wailer; we formed, the affordance is a skill 
 
 #####
 
-Data is imagined.
+    Data is imagined.
 
 ######
 
-Is understanding the machine proceed of thought[?]
+    Is understanding the machine proceed of thought[?]
 
 ######
 
