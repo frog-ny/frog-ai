@@ -6,9 +6,10 @@ const Schema = mongoose.Schema;
 
 const ArticleSchema = Schema({
     url: { type: String, required: true, max: 140 },
-    posted_by: { type: String, required: true, max: 100 },
-    timestamp: { type: Date, default: Date.now },
-    tags: { type: Array, default: []}
+    user: { type: String, required: true, max: 100 },
+    user_id: { type: String, required: true, max: 100 },
+    concepts: { type: Array, required: false, default: []},
+    timestamp: { type: Date, default: Date.now }
 });
 
 const Article = mongoose.model('Article', ArticleSchema);
