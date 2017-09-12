@@ -1,18 +1,20 @@
 'use strict';
+const DEBUG = false;
 const http = require('http');
 const config = require('./config');
 const SLACK_TOKEN = config.slack_token;
 const BOT_TOKEN = config.bot_token;
-const WATSON_UN = config.watson_un;
-const WATSON_PW = config.watson_pw;
+const AYLIEN_ID = config.aylien_id;
+const AYLIEN_KEY = config.aylien_key;
 const createSlackEventAdapter = require('@slack/events-api').createSlackEventAdapter;
 const slackEvents = createSlackEventAdapter(SLACK_TOKEN);
 const IncomingWebhook = require('@slack/client').IncomingWebhook;
 const webhookUrl = config.webhook_url;
 const webhook = new IncomingWebhook(webhookUrl);
+const webhook_dev = new IncomingWebhook(webhookUrl);
 const port = 3000;
 const mongoose = require('mongoose');
-const mongoDB = 'mongodb://127.0.0.1/test';
+const mongoDB = 'mongodb://127.0.0.1/frogai';
 const Article = require('./models/article');
 mongoose.Promise = global.Promise;
 mongoose.connect(mongoDB);
@@ -30,104 +32,35 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
-// Watson natural language processing for bot's response
-const NaturalLanguageUnderstanding = require('watson-developer-cloud/natural-language-understanding/v1');
-const natural_language_understanding = new NaturalLanguageUnderstanding({
-  'username': WATSON_UN,
-  'password': WATSON_PW,
-  'version_date': '2017-02-27'
-});
-
 let channel = 'C6GN4GYGM';
+let channel_dev = 'C70JQSS9E';
 let botConnected = false;
-
-let nluOptions = {
-  'features': {
-    'entities': {
-      'limit': 3
-    },
-    'concepts': {
-      'limit': 3
-    }
-  }
-}
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false  }));
 app.use('/slack/events', slackEvents.expressMiddleware());
 app.use('/slack/actions', slackMessages.expressMiddleware());
 
-let concepts;
+const AYLIENTextAPI = require('aylien_textapi');
+const textapi = new AYLIENTextAPI({
+    application_id: AYLIEN_ID,
+    application_key: AYLIEN_KEY 
+});
+
+
+let concepts = [];
 let message;
 let match;
 const re = /(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])?/ // regex to look for links posted in a message
 
 // Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
 slackEvents.on('message', (event) => {
-    
     // check to see if we're listening to the right channel
-    if (event.channel == channel){
+    if (event.channel === channel || event.channel === channel_dev){
         if (event != undefined && event.text != undefined && event.text.match(re) != undefined){
             let url = event.text.match(re)[0];
-            console.log(url)
-            // let url = event.message.attachments[0].from_url;
-            nluOptions.url = url;
-            natural_language_understanding.analyze(nluOptions, (err, response)=>{
-                if (err){
-                    console.log(err)
-                }
-                else {
-                    concepts = ''
-                    response.entities.forEach((e)=>{
-                        concepts += e.text + ', '
-                    });
-                    response.concepts.forEach((c, index)=>{
-                        response.entities.push(response.concepts[index]);
-                        if (index != response.concepts.length - 1){
-                            concepts += c.text + ', '
-                        }else {
-                            concepts += 'and ' + c.text + '.'
-                        }
-                    });
-
-                    console.log(concepts);
-
-                    message = {
-                        "text": "Hey there! Looks like someone sent an article about " + concepts,
-                        "attachments": [
-                            {
-                                "text": "Would you like frog's AI to learn from this article?",
-                                "fallback": "You are unable to train me",
-                                "callback_id": "train_me",
-                                "color": "#3AA3E3",
-                                "attachment_type": "default",
-                                "actions": [
-                                    {
-                                        "name": "training",
-                                        "text": "Yes",
-                                        "type": "button",
-                                        "value": url
-                                    },
-                                    {
-                                        "name": "training",
-                                        "text": "No thanks",
-                                        "type": "button",
-                                        "value": "no"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-
-                    webhook.send(message, (err, header, statusCode, body)=> {
-                      if (err) {
-                        console.log('Error:', err);
-                      } else {
-                        console.log('Received', statusCode, 'from Slack');
-                      }
-                    });
-                }
-            });
+            console.log(url);
+            sendMessage(url);
         }
     }
 });
@@ -141,24 +74,37 @@ slackMessages.action('train_me', (payload) => {
 
     // The `actions` array contains details about the specific action (button press, menu selection, etc.)
     const action = payload.actions[0];
-    console.log(`The button had name ${action.name} and value ${action.value}`);
-    if (action.value != 'no'){
-        var article = new Article({
-            posted_by: payload.user.name,
-            timestamp: Date.now(),
-            url: action.value,
-            tags: []
-        });
+    // console.log(`The button had name ${action.name} and value ${action.value}`);
 
-        article.save(function(err){
-            if(err) {
-                console.error(err);
-            }
-            else {
-                console.log('saved new article');
+    let article = new Article({
+        user: payload.user.name,
+        user_id: payload.user.id,
+        timestamp: Date.now(),
+        concepts: [],
+        url: action.value
+    });
+
+    if (action.value != 'no'){
+        textapi.concepts({
+            url: action.value 
+        }, function(error, response) {
+            if (error === null) {
+                concepts = [];
+
+                Object.keys(response.concepts).forEach((key)=>{
+                    response.concepts[key].surfaceForms.forEach((sf)=>{
+                        concepts.push(sf['string']);
+                    });
+                })
+
+                console.log(concepts)
+                article.concepts = concepts;
+                saveArticle(article);
+            }else {
+                console.log(error)
+                saveArticle(article);
             }
         });
-    
     }
 
     // You should return a JSON object which describes a message to replace the original.
@@ -170,7 +116,55 @@ slackMessages.action('train_me', (payload) => {
     return replacement;
 });
 
+function sendMessage(url){
+    message = {
+        // "text": "Looks like someone sent a link from " + url.split("\/\/")[1].split("\/")[0],
+        "text": "Looks like someone sent a link. Would you like @frog_ai's training data to include it?",
+        "attachments": [
+            {
+                "text": url.split("\/\/")[1],
+                "fallback": "You are unable to train me",
+                "callback_id": "train_me",
+                "color": "#3AA3E3",
+                "attachment_type": "default",
+                "actions": [
+                    {
+                        "name": "training",
+                        "text": "Yes",
+                        "type": "button",
+                        "value": url
+                    },
+                    {
+                        "name": "training",
+                        "text": "No thanks",
+                        "type": "button",
+                        "value": "no"
+                    }
+                ]
+            }
+        ]
+    }
+
+    webhook.send(message, (err, header, statusCode, body)=> {
+      if (err) {
+        console.log('Error:', err);
+      } else {
+        console.log('Received', statusCode, 'from Slack');
+      }
+    });
+}
+
+function saveArticle(article){
+    article.save((err)=>{
+        if(err){
+            console.error(err);
+        }else {
+            console.log('saved new article');
+        }
+    });
+}
+
 // Start the express application
 http.createServer(app).listen(port, () => {
-  console.log(`server listening on port ${port}`);
+    console.log(`server listening on port ${port}`);
 });
