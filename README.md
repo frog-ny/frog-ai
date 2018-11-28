@@ -50,7 +50,8 @@ Here are some samples from our model:
 
 ######
 
-    In every classification of which learning and controlling principle of other events, and companies, with weaks universe of resulting processing, knowledge-based provided used for design.
+    In every classification of which learning and controlling principle of other events, 
+    and companies, with weaks universe of resulting processing, knowledge-based provided used for design.
 
 ######
 
@@ -58,7 +59,8 @@ Here are some samples from our model:
 
 ######
 
-    With the dispotent and technical emotional knowledge of strategies to use with the technology to simply chaunite any are they quite an exploit the wailer; we formed, the affordance is a skill 
+    With the dispotent and technical emotional knowledge of strategies to use with the technology
+    to simply chaunite any are they quite an exploit the wailer; we formed, the affordance is a skill 
 
 #####
 

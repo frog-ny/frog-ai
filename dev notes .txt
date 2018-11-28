@@ -1,0 +1,30 @@
+“Let’s create a way for frog’s to shape an AI that talks about AI”
+
+What we’ve done in 1.5 weeks: 
+
+- “slack is a tool we all use everyday, already, to share writing around this topic
+	- Prototype a slack bot that looks for articles frog’s send about AI, acting as an interface to create a training data set.
+
+- Research ML options for text generation, landing on RNNs
+	-  
+
+Gather articles on articles
+Turns out we need a lot of training data, and lots of articles just talk about trends rather than about AI itself.
+
+Test out a few different learning machine learning modules / algorithms on AWS. 
+Turns out it’s really slow and generates gibberish because we don’t have enough data
+
+To solve the latter problem, we need to pick a corpus for our AI to learn how to “speak”
+	- scientific / academic papers
+	- internet arguments 
+	- all of english text
+
+After gathering this text, we realize that data is either a) way too broad or b) too many formulae. 
+
+Land on gathering an initial text seed that focuses on canonical prose, striking a cross section between design, technology, and philosophy.
+
+Still need to get over the Partition a machine that currently is running windows, to run ubuntu 16.04
+
+Next Steps
+	- 
+
